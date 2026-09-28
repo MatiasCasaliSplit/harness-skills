@@ -15,13 +15,17 @@ description: >-
   guardrail metric, ship this experiment, experiment summary.
 metadata:
   author: Harness
-  version: 1.0.0
+  version: 1.0.1
   mcp-server: harness-mcp-v2
 license: Apache-2.0
 compatibility: >-
   Requires Harness MCP v2 server (harness-mcp-v2) with fme_experiment,
   fme_experiment_settings, fme_experiment_result, and fme_metric. All are
   Harness-native only (org_id + project_id); no workspace_id support.
+  fme_experiment, fme_experiment_settings, and fme_experiment_result are
+  not registered in the MCP server yet - this skill is written against the
+  contract proposed for them and cannot run until they ship. fme_metric is
+  available today.
 ---
 
 # Review Experiment Results

@@ -13,7 +13,7 @@ description: >-
   design an experiment, launch a test on this flag, new experiment for X.
 metadata:
   author: Harness
-  version: 1.0.0
+  version: 1.0.1
   mcp-server: harness-mcp-v2
 license: Apache-2.0
 compatibility: >-
@@ -23,7 +23,10 @@ compatibility: >-
   Harness-native only (org_id + project_id) - there is no legacy
   workspace_id support, unlike fme_feature_flag. create requires
   environment_id as a param; the parent (Feature Flag or AI Config) must
-  already exist in that environment.
+  already exist in that environment. fme_experiment is not registered in
+  the MCP server yet - this skill is written against the contract proposed
+  for it and cannot create an experiment until it ships. The flag, metric,
+  event-type, and environment lookups it depends on work today.
 ---
 
 # Create Experiment
@@ -151,9 +154,8 @@ Come back to this skill with the resulting metric IDs once those skills
 finish; don't block Step 5 draft on that handoff being literally executed in
 the same turn if the user wants to finish the design conversation first.
 
-**Stop condition** for primary-vs-secondary assignment and for PER-vs-ACROSS
-metric framing on any newly created metric - both are `/choose-metric` /
-`/create-metric` decisions; this skill states that a decision is needed and
+**Stop condition** for primary-vs-secondary assignment - that's
+`/choose-metric`'s decision; this skill states that a decision is needed and
 points there rather than picking itself. See `references/stop-conditions.md`.
 
 ### Step 5: Decide the experiment window
@@ -251,9 +253,8 @@ results. Once it's run long enough to have data, point to
 - Step 4's inventory check is intentionally shallow - it exists to route to
   the right handoff skill, not to duplicate `/choose-metric`'s full
   health-check-and-recommend flow.
-- `fme_experiment` create has no retry policy documented here the way
-  `/create-metric` calls one out - treat a 400/409 the same way: don't blind
-  retry the identical payload.
+- Don't blind-retry an identical payload after a 400/409 - revise it first
+  (Step 7).
 
 ## Troubleshooting
 

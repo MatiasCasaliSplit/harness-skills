@@ -1,6 +1,6 @@
 # Stop conditions - option tables and rationale
 
-Referenced from SKILL.md Steps 1, 3, 4, 5, 6. Each of these is a point where a
+Referenced from SKILL.md Steps 1, 3, 5, 6. Each of these is a point where a
 plausible-sounding guess is available but wrong often enough that the skill
 requires presenting real options and waiting for a pick instead.
 
@@ -13,12 +13,12 @@ table and let the user pick - one decision, one turn:
 
 | Option | Shape |
 |--------|-------|
-| `<existing metric name>` | `<aggregation>` + `<spread>` on `<event>` (reuse this) |
-| `<existing metric name>` | `<aggregation>` + `<spread>` on `<event>` (reuse this) |
+| `<existing metric name>` | `<aggregation>` on `<event>` (reuse this) |
+| `<existing metric name>` | `<aggregation>` on `<event>` (reuse this) |
 | `new` | Define a new metric with a different shape |
 
-"I searched and picked the most relevant one" is not a substitute for
-showing the user what was found - a search result is not itself a decision.
+A search result is not itself a decision - show the user what was found
+instead of picking the most relevant hit yourself.
 
 ## Step 3: event not in the resolved list
 
@@ -39,22 +39,6 @@ backend does not validate `eventTypeId` existence by design) but the
 metric will silently never compute until the event flows - make sure the
 user understands that tradeoff if they want to proceed anyway.
 
-## Step 4: PER vs ACROSS
-
-If the user didn't say `PER` or `ACROSS`, present both options (with the
-meaning for their chosen `aggregation`) and wait for a pick before drafting
-Step 7:
-
-| Option | Meaning | Example (`RATE`) |
-|--------|---------|------------------|
-| `PER` (recommended for experiments) | Computed per unit, then compared across treatments; significance-tested | Percent of users who completed checkout |
-| `ACROSS` | One aggregate over the whole treatment; no significance test in experiment results | Count of unique users who completed checkout |
-
-`PER` and `ACROSS` produce different numbers from the same events, so don't
-pick silently even when the label ("conversion rate") points to `PER` -
-state the recommendation and let the user confirm. The backend defaults
-`spread` to `PER` when omitted; always send it explicitly.
-
 ## Step 5: missing or invalid owner
 
 "No owner specified" in the request is not permission to pick one
@@ -73,15 +57,13 @@ silently substitute one.
 ## Step 6: "before"/trigger relationship vs a plain filter event
 
 A base event can be scoped by another event in two conceptually different
-ways, but only one is actually creatable via this API today:
+ways:
 
 | Concept | Meaning | Field |
 |---------|---------|-------|
 | Filter event (`HAS_DONE`) | Only count units that did this event at all | `filterEventType` with `filterAggregation: "RATE"` |
-| Trigger event (`HAS_DONE_BEFORE`) | Only count units that did this event *before* the base event | **Not supported** - `fme_metric`'s create/update payload has no `triggerEventType` field (confirmed via `harness_describe`); settable only from the FME product UI |
+| Trigger event (`HAS_DONE_BEFORE`) | Only count units that did this event *before* the base event | `triggerEventType: {eventTypeId}` |
 
-If the request is ambiguous between the two, or explicitly asks for a
-before/trigger relationship, don't draft a payload with an invented
-`triggerEventType` field - tell the user the ordering constraint isn't
-API-creatable today, and confirm whether a plain `filterEventType` (no
-ordering) meets their need or they need the product UI instead.
+If the request is ambiguous between the two, ask which the user means
+before drafting the payload - using `filterEventType` when they meant
+ordering (or vice versa) silently changes which units get counted.

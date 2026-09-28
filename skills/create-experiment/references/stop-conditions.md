@@ -1,6 +1,6 @@
 # Stop conditions - option tables and rationale
 
-Referenced from SKILL.md Steps 2, 3, and 4. Each of these is a point where a
+Referenced from SKILL.md Steps 2, 3, and 4. Each is a point where a
 plausible-sounding guess is available but wrong often enough that the skill
 requires presenting real options (or pointing to the skill that owns the
 decision) and waiting for a pick, instead of improvising.
@@ -50,14 +50,3 @@ inventory check (Step 4) surfaces a single obvious-looking candidate - state
 that healthy candidates exist and hand off to `/choose-metric` for the actual
 assignment, the same way `/create-metric` hands off attachment decisions to
 `/choose-metric` rather than deciding them itself.
-
-## Step 4: PER vs. ACROSS framing on a newly created metric
-
-This is `/create-metric`'s decision (see its own `references/stop-conditions.md`,
-Step 4 there). If the metric-gap handoff reaches `/create-metric`, let that
-skill's PER-vs-ACROSS stop condition run - don't pre-decide `spread` here just
-because the experiment context makes `PER` look like the obvious choice.
-`ACROSS` metrics get no significance test, so getting this wrong quietly
-removes a metric's ability to decide the experiment; that's exactly the kind
-of consequential-but-guessable field `/create-metric` already has a
-dedicated stop condition for.

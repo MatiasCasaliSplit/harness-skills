@@ -10,7 +10,7 @@ description: >-
   configured, is X on in prod, what's targeted for X.
 metadata:
   author: Harness
-  version: 1.1.0
+  version: 1.1.1
   mcp-server: harness-mcp-v2
 license: Apache-2.0
 compatibility: >-
@@ -74,11 +74,12 @@ ask which one - don't guess by recency. Near-identical flags often share
 copy-pasted descriptions and rollout status, so `createdAt` and the link may
 be the only distinguishing details.
 
-Substring search can't surface near-duplicates that differ by a
-transposition or extra character (`promo_test_1` vs `prmo_test_1`). If the
-name looks generic/test-style (short, numbered, one of a family) or the user
-seems unsure of the spelling, run a second search on a shorter fragment
-(`test_1`) before treating a single hit as certain.
+Substring search can't surface a near-duplicate that differs from what the
+user typed by a transposition or an extra character - neither name contains
+the other, so each is invisible to the other's search. If the name looks
+generic (short, numbered, one of a family) or the user seems unsure of the
+spelling, run a second search on a shorter fragment of it before treating a
+single hit as certain.
 
 ### Step 3: Get flag metadata
 

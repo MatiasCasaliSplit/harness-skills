@@ -10,7 +10,7 @@ metric. Before drafting a revised payload:
 1. Name the specific conflicting metric (id + name) that this attempt
    collided with - the 409 response or Step 1's list tells you which.
 2. If the fix changes what the metric actually measures (different
-   `aggregation`, `spread`, or `baseEventTypes` than what the user asked
+   `aggregation` or `baseEventTypes` than what the user asked
    for - e.g. pivoting from `RATE` to `COUNT`, or from `checkout_completed`
    to a different event to dodge the conflict), that is a new decision,
    not a retry of the old one. Show the user the specific existing metric
@@ -18,15 +18,13 @@ metric. Before drafting a revised payload:
    before calling `harness_create`.
 3. Never loop through `harness_create` attempts autonomously and report
    the conflicts afterwards - each conflict is a checkpoint, not a line in
-   the final summary. **This holds on the 4th or 9th consecutive 409 as
-   much as the first.** The user approving one retry is not permission for
-   the next; each attempt is its own decision.
-4. Never invent a technical justification (e.g. "the backend treats event X
-   and Y as equivalent") to reuse a value in a revised draft. If a revised
-   draft would reuse a `baseEventTypes`/`filterEventType` entry or owner
-   already found invalid or nonexistent in this conversation (Step 3,
-   Step 5) - including one copied from the conflicting metric's own
-   definition - re-run the resolving list call first.
+   the final summary. Approving one retry is not permission for the next;
+   every attempt is its own decision, however many 409s precede it.
+4. If a revised draft would reuse a `baseEventTypes`/`filterEventType`
+   entry or owner already found invalid or nonexistent in this conversation
+   (Step 3, Step 5) - including one copied from the conflicting metric's
+   own definition - re-run the resolving list call first rather than
+   justifying the reuse.
 
 ## Anti-patterns (do not do this)
 
@@ -34,12 +32,11 @@ metric. Before drafting a revised payload:
 |--------------|-------------------|
 | Search existing metrics/events, then silently pick one yourself | Turn search results into a concrete option list/table and let the user choose (Step 1, Step 3) |
 | Substitute a different real event for a missing one without asking | Present the real event list and let the user pick (Step 3) |
-| Pick `PER` vs `ACROSS` silently from a label like "conversion rate" | Present both options with a recommendation and wait for a pick (Step 4) |
 | Fill in a plausible owner because "no owner specified" was in the request | Treat a missing owner as a stop condition - ask for a `USER` email or `GROUP` name (Step 5) |
-| Retry `harness_create` after a 409 without a new confirmation, including after several earlier confirmed retries | Every revised draft goes back through Step 7, on every attempt (Step 8) |
-| Revert a `baseEventTypes`/`filterEventType` or owner field to a value already flagged as invalid/nonexistent, justified by an unverified claim | Re-run the resolving list call before reusing any previously-flagged value in a revised draft (Step 8) |
-| Change `aggregation`/`spread`/`baseEventTypes` to dodge a 409 and only mention it in a final summary | Name the specific conflicting metric and show the revised draft *before* retrying, not after success (Step 8) |
-| Draft a payload, then send a different one to `harness_create` than what was confirmed | The confirmed draft and the request body must match field-for-field |
+| Substitute a plain `filterEventType` when the user asked for a before/trigger ordering | Use `triggerEventType` (HAS_DONE_BEFORE) - it drops the ordering otherwise (Step 6) |
+| Retry `harness_create` after a 409 without a new confirmation | Every revised draft goes back through Step 7, on every attempt (Step 8) |
+| Change `aggregation`/`baseEventTypes` to dodge a 409 and only mention it in a final summary | Name the specific conflicting metric and show the revised draft *before* retrying (Step 8) |
+| Draft a payload, then send a different one to `harness_create` | The confirmed draft and the request body must match field-for-field |
 | Report a create as successful without an independent `harness_get` on the returned id | Always run Step 9 before telling the user it's done |
 
 ## Troubleshooting

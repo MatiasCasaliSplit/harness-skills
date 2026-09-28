@@ -7,7 +7,7 @@ description: >-
   instrument-metric. Trigger phrases: create/define a metric, new metric.
 metadata:
   author: Harness
-  version: 1.0.1
+  version: 1.1.0
   mcp-server: harness-mcp-v2
 license: Apache-2.0
 compatibility: >-
@@ -91,13 +91,13 @@ don't silently substitute the closest-looking real event either; see
   values), `AVERAGE` (average event value), `RATE` (unique units that did
   the event). `TOTAL`/`AVERAGE` sum the `track()` value, or the property
   named in `baseEventTypes[].propertyForValue`.
-- **`spread`** (always required): `PER` = computed per unit, then compared
-  across treatments (e.g. `RATE`+`PER` = percent of users who converted,
-  `COUNT`+`PER` = events per user). `ACROSS` = one aggregate over the whole
-  treatment (e.g. `RATE`+`ACROSS` = count of unique converting users).
-  `ACROSS` metrics get no significance test in experiment results.
-  **Stop condition** if `PER` vs `ACROSS` wasn't specified - see
-  `references/stop-conditions.md`.
+- **`spread`**: send `PER` explicitly. `PER` = computed per unit, then
+  compared across treatments (`RATE`+`PER` = percent of users who
+  converted, `COUNT`+`PER` = events per user). `ACROSS` (one aggregate over
+  the whole treatment) is a deprecated legacy value with no create path and
+  no significance test in experiment results - don't offer it as a choice.
+  Existing `ACROSS` metrics can still be read and patched via
+  `fme_metric.update`.
 - **`format`**: `NUMBER`, `DOLLAR`, `PERCENTAGE`, `SECONDS`,
   `MILLISECONDS`, `BYTES` - display only. `RATE`+`PER` always reads back as
   `PERCENTAGE`; `PERCENTAGE` on anything else reads back as `NUMBER`.
@@ -130,17 +130,13 @@ don't silently substitute the closest-looking real event either; see
     events per unit"): `baseEventTypes` is the numerator, `filterEventType`
     the denominator.
 
-- **Before/trigger relationships (HAS_DONE_BEFORE) aren't creatable via this
-  API today.** `harness_describe(resource_type="fme_metric")`'s create
-  payload fields list only `filterEventType` (HAS_DONE) alongside
-  `baseEventTypes`/`tags`/`owners`/`cap` - there is no `triggerEventType`
-  field, and no metric in this workspace has one set (checked across all 59
-  existing metrics). If the user asks for "only count users who did X
-  before Y", "prior to", or "as a trigger", don't invent a
-  `triggerEventType` field in the payload - tell them this ordering
-  relationship can only be set from the FME product UI today, not via this
-  skill, and confirm whether a plain `filterEventType` (HAS_DONE - "did X
-  at all", no ordering) covers their need instead.
+- `triggerEventType` - `{eventTypeId}`, resolved the same way as Step 3.
+  Before/trigger relationship (HAS_DONE_BEFORE): only count units that did
+  this event *before* the base event. Use this when the user asks for
+  "only count users who did X before Y", "prior to", or "as a trigger" -
+  don't substitute a plain `filterEventType` (HAS_DONE, no ordering) for
+  this, since it drops the ordering constraint the user asked for. On
+  update, omitting the field leaves it unchanged; `null` clears it.
 
   **Stop condition** if the request is ambiguous between a plain "has done
   this event" filter and a before/trigger relationship - see
@@ -166,10 +162,10 @@ trafficType: <name>
 format: <FORMAT>
 aggregation: <AGGREGATION>
 isPositive: <true|false>
-spread: <PER|ACROSS>
+spread: PER
 baseEventTypes: [{ eventTypeId: <resolved id> }]
 owners: [{ type: "USER", email: <email> }]
-# + filterEventType / cap / tags if applicable
+# + filterEventType / triggerEventType / cap / tags if applicable
 ```
 
 **STOP HERE. Do not call `harness_create` yet.** Wait for the user to
@@ -203,12 +199,10 @@ Parameters:
   resource_id: "<id from create response>"
 ```
 
-Use the literal `id` string from the `harness_create` response - don't
-retype or recall it from memory. Confirm the returned `spread`/`format`/
-`aggregation` match what was requested; if `format` was coerced (Step 4),
-tell the user. Metric IDs are UUIDs - if the id doesn't have that shape, or
-this step wasn't actually run, stop and say so rather than reporting
-success.
+Use the literal `id` string from the `harness_create` response rather than
+retyping it. Confirm the returned `format`/`aggregation` match what was
+requested; if `format` was coerced (Step 4), tell the user. Never report a
+create as successful without this `harness_get` succeeding.
 
 ### Step 10: Hand off if needed
 
