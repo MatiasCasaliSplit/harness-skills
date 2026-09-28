@@ -72,10 +72,16 @@ silently substitute one.
 
 ## Step 6: "before"/trigger relationship vs a plain filter event
 
-A base event can be scoped by another event in two independent ways, on
-different fields, so an ambiguous request needs a pick before drafting:
+A base event can be scoped by another event in two conceptually different
+ways, but only one is actually creatable via this API today:
 
 | Concept | Meaning | Field |
 |---------|---------|-------|
 | Filter event (`HAS_DONE`) | Only count units that did this event at all | `filterEventType` with `filterAggregation: "RATE"` |
-| Trigger event (`HAS_DONE_BEFORE`) | Only count units that did this event *before* the base event | `triggerEventType` (`{eventTypeId}` only - no aggregation/property filters) |
+| Trigger event (`HAS_DONE_BEFORE`) | Only count units that did this event *before* the base event | **Not supported** - `fme_metric`'s create/update payload has no `triggerEventType` field (confirmed via `harness_describe`); settable only from the FME product UI |
+
+If the request is ambiguous between the two, or explicitly asks for a
+before/trigger relationship, don't draft a payload with an invented
+`triggerEventType` field - tell the user the ordering constraint isn't
+API-creatable today, and confirm whether a plain `filterEventType` (no
+ordering) meets their need or they need the product UI instead.

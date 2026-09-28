@@ -7,7 +7,7 @@ description: >-
   instrument-metric. Trigger phrases: create/define a metric, new metric.
 metadata:
   author: Harness
-  version: 1.0.0
+  version: 1.0.1
   mcp-server: harness-mcp-v2
 license: Apache-2.0
 compatibility: >-
@@ -130,14 +130,20 @@ don't silently substitute the closest-looking real event either; see
     events per unit"): `baseEventTypes` is the numerator, `filterEventType`
     the denominator.
 
-- `triggerEventType` - `{eventTypeId}`, for a temporal/"before" relationship
-  (HAS_DONE_BEFORE: the unit must have done this event before the base
-  event) - e.g. "only count users who did X before Y", "prior to", "as a
-  trigger". Resolve `eventTypeId` the same way as Step 3. The shape is
-  `{eventTypeId}` only - no `filterAggregation` or `propertyFilters`.
+- **Before/trigger relationships (HAS_DONE_BEFORE) aren't creatable via this
+  API today.** `harness_describe(resource_type="fme_metric")`'s create
+  payload fields list only `filterEventType` (HAS_DONE) alongside
+  `baseEventTypes`/`tags`/`owners`/`cap` - there is no `triggerEventType`
+  field, and no metric in this workspace has one set (checked across all 59
+  existing metrics). If the user asks for "only count users who did X
+  before Y", "prior to", or "as a trigger", don't invent a
+  `triggerEventType` field in the payload - tell them this ordering
+  relationship can only be set from the FME product UI today, not via this
+  skill, and confirm whether a plain `filterEventType` (HAS_DONE - "did X
+  at all", no ordering) covers their need instead.
 
-  **Stop condition** if the user's request is ambiguous between a plain
-  "has done this event" filter and a before/trigger relationship - see
+  **Stop condition** if the request is ambiguous between a plain "has done
+  this event" filter and a before/trigger relationship - see
   `references/stop-conditions.md`.
 - `cap` - outlier capping; 7 sub-fields (`baseEventCountCap`,
   `baseEventSumCap`, `baseEventValueCap`, `filterEventCountCap`,
@@ -163,7 +169,7 @@ isPositive: <true|false>
 spread: <PER|ACROSS>
 baseEventTypes: [{ eventTypeId: <resolved id> }]
 owners: [{ type: "USER", email: <email> }]
-# + filterEventType / triggerEventType / cap / tags if applicable
+# + filterEventType / cap / tags if applicable
 ```
 
 **STOP HERE. Do not call `harness_create` yet.** Wait for the user to
