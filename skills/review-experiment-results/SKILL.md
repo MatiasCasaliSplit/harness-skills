@@ -87,13 +87,10 @@ which metric(s) should drive the verdict; don't substitute
 `supportingMetrics`.
 
 **Stop condition:** if `comparisonTreatments` has more than one entry and
-the user didn't specify one, stop here and ask which treatment(s) to
-compare against the baseline - do not proceed to Step 3 first. It's easy to
-notice this list has multiple entries, keep going because Step 4 will
-happily return a row per treatment anyway, and only realize afterward that
-nothing was ever asked. If the user does want every treatment (or asks for
-"all of them"), that's a valid answer to the question - just make it an
-answer, not a default.
+the user didn't specify one, stop before Step 3 and ask which treatment(s)
+to compare - reporting every treatment is a valid answer, but it must be an
+answer, not a default you fall into because Step 4 would return every row
+anyway.
 
 ### Step 3: Fetch experiment settings
 
@@ -215,10 +212,9 @@ Modifiers (attach to any verdict):
 ### Step 8: Explain the results
 
 Default to plain language:
-- Verdict first, then why. Warm, direct tone.
-- No p-values, confidence intervals, or sample sizes in the main
-  explanation.
-- Use the treatment names the data uses.
+- Verdict first, then why, in a warm direct tone - no p-values, CIs, or
+  sample sizes in the main explanation, and use the data's actual treatment
+  names.
 - Describe trade-offs rather than prescribing a business decision
   ("Treatment B improved conversion but reduced average order value", not
   "you should ship Treatment B").
@@ -227,30 +223,19 @@ Default to plain language:
 - For an `inconclusive` result that isn't significance-tested (see the
   reference file), say why (e.g. an `ACROSS` metric) rather than "no
   significant effect".
-- Include `calculatedAt` when non-null to timestamp the readout. If it's
-  `null` but results have terminal states (`SUCCESS`/`FAILURE`/etc. with
-  real p-values), say the readout reflects the latest run without a
-  timestamp - don't just print "Calculated: null" and move on.
-- A `NO_WINNER` verdict can mean very different things: all `KEY` results
-  genuinely flat, or a mix where some are `desired` and the rest merely
-  `inconclusive`. Say which one it is - a metric with a strong, significant
-  desired effect shouldn't read the same as "nothing happened" just because
-  another `KEY` metric kept it short of `WINNER`.
-- Don't quote `value`/impact numbers as if they carry confidence when
-  `pvalue` is `null` (e.g. `WAITING_NORMALITY`) - a raw sample mean isn't a
-  statistically backed estimate yet, even when it's directionally
-  interesting.
-- If `GUARDRAIL_BREACH` co-occurs with `MIXED`, lead with the trade-off, not
-  the key-metric lift - open with something like "X regressed on
-  <guardrail>, even though <key metric> improved," not a positive framing
-  that mentions the breach as an afterthought. The breach is why this isn't
-  a clean win, not a footnote to one.
-- When reporting on more than one comparison treatment (see Step 2's stop
-  condition and Step 7's "one verdict per treatment"), repeat the Verdict
-  and Metric Impact sections once per treatment, each under its own `###
-  <treatment name>` subheading beneath a shared `## Verdict` /
-  `## Metric Impact` heading - don't merge treatments into one table or one
-  verdict line, since each treatment gets an independent verdict.
+- Include `calculatedAt` when non-null. If it's `null` but results have
+  terminal states (real p-values), say the readout reflects the latest run
+  without a timestamp instead of printing "Calculated: null".
+- `NO_WINNER` covers both "all `KEY` results flat" and "some desired, some
+  merely inconclusive" - say which; don't undersell a metric with a strong
+  desired effect as "nothing happened" just because another metric kept it
+  short of `WINNER`.
+- Don't quote `value`/impact numbers as confident when `pvalue` is `null`
+  (e.g. `WAITING_NORMALITY`) - it's a raw sample mean, not yet a
+  statistically backed estimate.
+- If `GUARDRAIL_BREACH` co-occurs with `MIXED`, lead with the breach, not
+  the key-metric lift - it's why this isn't a clean win, not a footnote to
+  one.
 
 Add the stats detail (p-value, confidence interval, sample sizes,
 `significanceThreshold`, `multipleComparisonCorrection`, settings `source`)
@@ -285,35 +270,11 @@ For a single comparison treatment:
 ```
 
 For more than one comparison treatment (only after the user has answered
-Step 2's stop condition), repeat the verdict and metric-impact block per
-treatment under its own subheading, sharing one experiment header and one
-Notes section:
-
-```
-## Experiment Readout
-- Experiment: <name> (<status>)
-- Comparing: <treatment_a>, <treatment_b> vs <baseline>
-- Calculated: <calculatedAt>
-
-### <treatment_a>
-**<VERDICT>** [+ modifiers if any]
-<2-4 sentence explanation>
-
-| Metric | Role | Result |
-|---|---|---|
-| <name> | Key / Supporting / Guardrail / Alert | <result> |
-
-### <treatment_b>
-**<VERDICT>** [+ modifiers if any]
-<2-4 sentence explanation>
-
-| Metric | Role | Result |
-|---|---|---|
-| <name> | Key / Supporting / Guardrail / Alert | <result> |
-
-## Notes
-<data-quality caveats, if any; otherwise omit this section>
-```
+Step 2's stop condition), keep one shared experiment header and Notes
+section, but repeat the verdict + table block per treatment under its own
+`### <treatment name>` subheading in place of the single `## Verdict` /
+`## Metric Impact` headings - each treatment gets an independent verdict,
+never one merged table or verdict line.
 
 Add p-value/CI/sample-size columns to Metric Impact only when Step 8's
 stats condition is met.
