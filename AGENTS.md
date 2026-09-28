@@ -54,11 +54,16 @@ Skills live in `skills/<skill-name>/SKILL.md`. Each skill folder may contain `re
 | `/manage-users` | Manage users, user groups, and service accounts |
 | `/manage-roles` | RBAC roles, assignments, permissions, and resource groups |
 
-### Feature Flags
+### Feature Flags & Experimentation
 
 | Skill | Description |
 |-------|-------------|
 | `/manage-feature-flags` | Create, list, toggle, and delete feature flags |
+| `/explain-flag` | Explain a single flag's purpose, default rule, and per-environment targeting, flagging inconsistencies |
+| `/review-experiment-results` | Explain experiment results: winner, significance, guardrail impact, data-quality caveats |
+| `/choose-metric` | Recommend primary/guardrail metrics for an experiment or rollout monitoring |
+| `/create-metric` | Create an FME metric definition (traffic type, aggregation, event types, cap, owners) |
+| `/instrument-metric` | Wire up a track() call for a metric's event and verify it arrives |
 
 ### Database Operations
 

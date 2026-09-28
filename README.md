@@ -235,6 +235,11 @@ Typical sequence:
 | [`/manage-users`](skills/manage-users/SKILL.md) | Manage users, user groups, and service accounts |
 | [`/manage-roles`](skills/manage-roles/SKILL.md) | Manage role assignments and RBAC |
 | [`/manage-feature-flags`](skills/manage-feature-flags/SKILL.md) | Create, list, toggle, and delete feature flags |
+| [`/explain-flag`](skills/explain-flag/SKILL.md) | Explain a single flag's purpose, default rule, and per-environment targeting, flagging inconsistencies |
+| [`/review-experiment-results`](skills/review-experiment-results/SKILL.md) | Explain experiment results: winner, significance, guardrail impact, data-quality caveats |
+| [`/choose-metric`](skills/choose-metric/SKILL.md) | Recommend primary/guardrail metrics for an experiment or rollout monitoring |
+| [`/create-metric`](skills/create-metric/SKILL.md) | Create an FME metric definition (traffic type, aggregation, event types, cap, owners) |
+| [`/instrument-metric`](skills/instrument-metric/SKILL.md) | Wire up a track() call for a metric's event and verify it arrives |
 
 ### Operations & Debugging (MCP)
 

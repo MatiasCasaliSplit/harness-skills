@@ -1,2 +1,5 @@
 # Local SBOM test fixtures (not part of skill definitions)
 sboms/
+
+# skill-creator eval-run scratch output (not part of skill definitions)
+skills/*-workspace/
