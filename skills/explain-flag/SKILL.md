@@ -10,7 +10,7 @@ description: >-
   configured, is X on in prod, what's targeted for X.
 metadata:
   author: Harness
-  version: 1.1.1
+  version: 1.1.2
   mcp-server: harness-mcp-v2
 license: Apache-2.0
 compatibility: >-
@@ -183,6 +183,11 @@ If no environment has a definition, skip the table:
 
 This flag exists but has no targeting configured in any environment yet.
 ```
+
+If the question was scoped ("is X on in prod?"), answer it in that case
+too rather than leaving the reader to infer it: with no definition there,
+the flag isn't serving anything in that environment and SDKs fall back to
+the control treatment - it's unconfigured, not on or off.
 
 ## Examples
 

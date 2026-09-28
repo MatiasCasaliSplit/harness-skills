@@ -7,13 +7,17 @@ description: >-
   choose/pick a metric, primary metric, guardrail metric, what to monitor.
 metadata:
   author: Harness
-  version: 1.0.0
+  version: 1.0.1
   mcp-server: harness-mcp-v2
 license: Apache-2.0
 compatibility: >-
   Requires Harness MCP v2 server (harness-mcp-v2) with fme_metric,
   fme_event_type, and fme_experiment. Rollout-monitoring recommendations
   are advisory only; the MCP server can't attach metrics to a rollout.
+  fme_experiment is not registered in the MCP server yet, so Step 2's
+  already-attached check is unavailable - recommend from the metric
+  inventory and hypothesis alone until it ships. fme_metric and
+  fme_event_type are available today.
 ---
 
 # Choose Metric
@@ -46,8 +50,10 @@ from the flag name.
 
 ### Step 2: Check what's already attached (experiment context only)
 
-If the experiment already exists, try to read its current attachment
-before recommending anything, so you don't propose duplicates:
+Skip this step while `fme_experiment` is unregistered (see `compatibility`);
+the call will fail on the `resource_type` before reaching the API. Once it
+ships, read the experiment's current attachment before recommending
+anything, so you don't propose duplicates:
 
 ```
 Call MCP tool: harness_get
