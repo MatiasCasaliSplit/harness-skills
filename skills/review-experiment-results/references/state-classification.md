@@ -16,8 +16,8 @@ shown and default anything unmatched to `needs_more_data`.
 | `RULE_ANY` | `inconclusive` | Not significance-tested for this targeting-rule selection |
 | `SINGLE_TREATMENT_*` | `inconclusive` | Not significance-tested: only one treatment has data |
 | `NOT_POSSIBLE_VARIANCE_ZERO` | `inconclusive` | Not testable: zero variance |
-| `WAITING_NORMALITY` | `needs_more_data` | Still accumulating data |
-| `NO_DATA_*` (except `NO_DATA_SERVER_ERROR`) | `needs_more_data` | No usable data yet (no impressions, no filter-event data, etc.) |
+| `WAITING_NORMALITY` | `needs_more_data` | Still accumulating data - seen only with `statisticalTestType: SEQUENTIAL`, which gates the sequential test behind a normality check |
+| `NO_DATA_*` (except `NO_DATA_SERVER_ERROR`) | `needs_more_data` | No usable data yet (no impressions, no filter-event data, etc.) - set `DATA_QUALITY_CONCERN` if the result is `GUARDRAIL` or `ALERT`, since a monitored metric with zero data is itself worth flagging, not just a KEY metric pending collection |
 | `NO_DATA_SERVER_ERROR`, `FAILED_METRIC` | `needs_more_data` | Calculation error - mention it and set `DATA_QUALITY_CONCERN` |
 | `null` | `needs_more_data` | No verdict yet (`pvalue` is also `null`) |
 | anything else | `needs_more_data` | Unrecognized - don't guess |

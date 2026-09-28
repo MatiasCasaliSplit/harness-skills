@@ -87,8 +87,13 @@ which metric(s) should drive the verdict; don't substitute
 `supportingMetrics`.
 
 **Stop condition:** if `comparisonTreatments` has more than one entry and
-the user didn't specify one, ask which treatment(s) to compare against the
-baseline rather than reporting every comparison.
+the user didn't specify one, stop here and ask which treatment(s) to
+compare against the baseline - do not proceed to Step 3 first. It's easy to
+notice this list has multiple entries, keep going because Step 4 will
+happily return a row per treatment anyway, and only realize afterward that
+nothing was ever asked. If the user does want every treatment (or asks for
+"all of them"), that's a valid answer to the question - just make it an
+answer, not a default.
 
 ### Step 3: Fetch experiment settings
 
@@ -201,7 +206,11 @@ Modifiers (attach to any verdict):
   is not a guardrail breach. By the row order, `WINNER` never carries this
   modifier; never state a winner when a guardrail regressed.
 - `DATA_QUALITY_CONCERN` - more than half of the `KEY` results are in a
-  `NO_DATA_*` state, or any result is `NO_DATA_SERVER_ERROR`/`FAILED_METRIC`.
+  `NO_DATA_*` state; any result is `NO_DATA_SERVER_ERROR`/`FAILED_METRIC`;
+  or any `GUARDRAIL`/`ALERT` result is in a `NO_DATA_*` state at all. A
+  guardrail that never received data is a monitoring gap worth surfacing on
+  its own, not just a data point to omit - don't let it disappear into a
+  `WINNER` verdict unremarked.
 
 ### Step 8: Explain the results
 
@@ -218,7 +227,30 @@ Default to plain language:
 - For an `inconclusive` result that isn't significance-tested (see the
   reference file), say why (e.g. an `ACROSS` metric) rather than "no
   significant effect".
-- Include `calculatedAt` when non-null to timestamp the readout.
+- Include `calculatedAt` when non-null to timestamp the readout. If it's
+  `null` but results have terminal states (`SUCCESS`/`FAILURE`/etc. with
+  real p-values), say the readout reflects the latest run without a
+  timestamp - don't just print "Calculated: null" and move on.
+- A `NO_WINNER` verdict can mean very different things: all `KEY` results
+  genuinely flat, or a mix where some are `desired` and the rest merely
+  `inconclusive`. Say which one it is - a metric with a strong, significant
+  desired effect shouldn't read the same as "nothing happened" just because
+  another `KEY` metric kept it short of `WINNER`.
+- Don't quote `value`/impact numbers as if they carry confidence when
+  `pvalue` is `null` (e.g. `WAITING_NORMALITY`) - a raw sample mean isn't a
+  statistically backed estimate yet, even when it's directionally
+  interesting.
+- If `GUARDRAIL_BREACH` co-occurs with `MIXED`, lead with the trade-off, not
+  the key-metric lift - open with something like "X regressed on
+  <guardrail>, even though <key metric> improved," not a positive framing
+  that mentions the breach as an afterthought. The breach is why this isn't
+  a clean win, not a footnote to one.
+- When reporting on more than one comparison treatment (see Step 2's stop
+  condition and Step 7's "one verdict per treatment"), repeat the Verdict
+  and Metric Impact sections once per treatment, each under its own `###
+  <treatment name>` subheading beneath a shared `## Verdict` /
+  `## Metric Impact` heading - don't merge treatments into one table or one
+  verdict line, since each treatment gets an independent verdict.
 
 Add the stats detail (p-value, confidence interval, sample sizes,
 `significanceThreshold`, `multipleComparisonCorrection`, settings `source`)
@@ -230,6 +262,8 @@ applied. Otherwise close with a one-line note that stats are available on
 request.
 
 ## Output Format
+
+For a single comparison treatment:
 
 ```
 ## Experiment Readout
@@ -245,6 +279,37 @@ request.
 | Metric | Role | Result |
 |---|---|---|
 | <name> | Key / Supporting / Guardrail / Alert | <desired/undesired/inconclusive/needs more data, in plain words> |
+
+## Notes
+<data-quality caveats, if any; otherwise omit this section>
+```
+
+For more than one comparison treatment (only after the user has answered
+Step 2's stop condition), repeat the verdict and metric-impact block per
+treatment under its own subheading, sharing one experiment header and one
+Notes section:
+
+```
+## Experiment Readout
+- Experiment: <name> (<status>)
+- Comparing: <treatment_a>, <treatment_b> vs <baseline>
+- Calculated: <calculatedAt>
+
+### <treatment_a>
+**<VERDICT>** [+ modifiers if any]
+<2-4 sentence explanation>
+
+| Metric | Role | Result |
+|---|---|---|
+| <name> | Key / Supporting / Guardrail / Alert | <result> |
+
+### <treatment_b>
+**<VERDICT>** [+ modifiers if any]
+<2-4 sentence explanation>
+
+| Metric | Role | Result |
+|---|---|---|
+| <name> | Key / Supporting / Guardrail / Alert | <result> |
 
 ## Notes
 <data-quality caveats, if any; otherwise omit this section>
