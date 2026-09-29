@@ -13,7 +13,7 @@ description: >-
   design an experiment, launch a test on this flag, new experiment for X.
 metadata:
   author: Harness
-  version: 1.0.1
+  version: 1.0.2
   mcp-server: harness-mcp-v2
 license: Apache-2.0
 compatibility: >-
@@ -122,8 +122,12 @@ Parameters:
   resource_type: "fme_metric"
   org_id: "<org_id>"
   project_id: "<project_id>"
-  filters: { name: "<keyword from the hypothesis, substring>" }
+  filters: { name: "<keyword from the hypothesis, substring>", limit: 20 }
 ```
+
+Always pass a `name` keyword and a `limit` here - this step is only meant to
+establish whether a gap exists, and an unnarrowed `fme_metric` list returns
+up to 100 full definitions.
 
 For each candidate worth considering, check its event is actually flowing
 (same technique `/choose-metric` Step 4 uses - don't re-derive the logic,

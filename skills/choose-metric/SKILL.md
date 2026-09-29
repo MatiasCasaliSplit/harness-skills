@@ -7,7 +7,7 @@ description: >-
   choose/pick a metric, primary metric, guardrail metric, what to monitor.
 metadata:
   author: Harness
-  version: 1.0.1
+  version: 1.1.0
   mcp-server: harness-mcp-v2
 license: Apache-2.0
 compatibility: >-
@@ -77,11 +77,21 @@ Parameters:
   resource_type: "fme_metric"
   org_id: "<org_id>"
   project_id: "<project_id>"
-  filters: { traffic_type_id: "<traffic_type_id>" }   # if known, to narrow to relevant metrics
+  filters: { traffic_type_id: "<traffic_type_id>", limit: 30 }
 ```
 
-Filter fields (`traffic_type_id`, `name`, etc.) must go inside `filters` -
-passing them as top-level parameters is silently accepted but ignored.
+Always narrow this call. Resolve `traffic_type_id` from `fme_traffic_type`
+first if you don't have it, and add `name` when the hypothesis gives an
+obvious keyword - an unnarrowed list returns up to 100 full metric
+definitions, which is the largest response in this skill by far.
+
+Filter fields (`traffic_type_id`, `name`, `limit`, `offset`) must go inside
+`filters` - passed top-level they're silently accepted and ignored. FME
+lists default to `limit: 100` (max 100) and ignore `harness_list`'s `page` -
+paginate with `offset` instead. When `totalCount` exceeds the rows you got
+back, say the inventory was truncated rather than presenting it as the
+complete set; `totalCount` is an upper bound, so treat it as "at least this
+many more", not an exact remainder.
 
 Read `name`, `description`, `aggregation`, `spread`, `format`,
 `isPositive`, and `baseEventTypes[].eventTypeId` for each. `description` matters here: use it

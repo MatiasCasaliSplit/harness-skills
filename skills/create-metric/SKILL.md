@@ -7,7 +7,7 @@ description: >-
   instrument-metric. Trigger phrases: create/define a metric, new metric.
 metadata:
   author: Harness
-  version: 1.1.0
+  version: 1.1.1
   mcp-server: harness-mcp-v2
 license: Apache-2.0
 compatibility: >-
@@ -42,12 +42,14 @@ Parameters:
   resource_type: "fme_metric"
   org_id: "<org_id>"
   project_id: "<project_id>"
-  filters: { name: "<proposed name, substring>" }
+  filters: { name: "<proposed name, substring>", limit: 20 }
 ```
 
 Filter fields go under `filters`, not top-level - passed top-level they're
 silently ignored and every metric comes back unfiltered (same for
-`traffic_type` in Step 3).
+`traffic_type` in Step 3). Keep `name` as specific as the request allows:
+these are full metric definitions, so a broad substring like `purchase` can
+return dozens of them.
 
 The backend returns 409 for a duplicate name and for a duplicate
 definition (same attribute combination) under a different name - catching
@@ -78,8 +80,11 @@ Parameters:
   resource_type: "fme_event_type"
   org_id: "<org_id>"
   project_id: "<project_id>"
-  filters: { traffic_type: "<traffic type name or id>" }
+  filters: { traffic_type: "<traffic type name or id>", name: "<event name, if the user named one>" }
 ```
+
+Add `name` whenever the user named the event; drop it only when you need
+the full list to show what's available. Both are substring/ID matches.
 
 **Stop condition** if the event isn't in this list - don't invent an ID and
 don't silently substitute the closest-looking real event either; see
