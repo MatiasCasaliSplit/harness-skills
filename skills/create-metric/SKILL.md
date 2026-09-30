@@ -7,7 +7,7 @@ description: >-
   instrument-metric. Trigger phrases: create/define a metric, new metric.
 metadata:
   author: Harness
-  version: 1.1.1
+  version: 1.2.0
   mcp-server: harness-mcp-v2
 license: Apache-2.0
 compatibility: >-
@@ -46,7 +46,9 @@ Parameters:
 ```
 
 Filter fields go under `filters`, not top-level - passed top-level they're
-silently ignored and every metric comes back unfiltered (same for
+silently ignored and every metric comes back unfiltered. `limit` belongs in
+`filters` too; `harness_list`'s top-level `size` maps to the same thing, so
+don't send both. (Same for
 `traffic_type` in Step 3). Keep `name` as specific as the request allows:
 these are full metric definitions, so a broad substring like `purchase` can
 return dozens of them.
@@ -86,7 +88,11 @@ Parameters:
 Add `name` whenever the user named the event; drop it only when you need
 the full list to show what's available. Both are substring/ID matches.
 
-**Stop condition** if the event isn't in this list - don't invent an ID and
+**Stop condition** if the event isn't in this list, *or* if several events
+match and none is an exact match for what the user said - a substring search
+on a word like `purchase` routinely returns a dozen variants, so present the
+real ones and ask instead of picking the shortest or cleanest-looking name.
+Don't invent an ID and
 don't silently substitute the closest-looking real event either; see
 `references/stop-conditions.md`.
 
@@ -104,7 +110,8 @@ don't silently substitute the closest-looking real event either; see
   Existing `ACROSS` metrics can still be read and patched via
   `fme_metric.update`.
 - **`format`**: `NUMBER`, `DOLLAR`, `PERCENTAGE`, `SECONDS`,
-  `MILLISECONDS`, `BYTES` - display only. `RATE`+`PER` always reads back as
+  `MILLISECONDS`, `BYTES` - display only. `NUMBER` is the right default when
+  the request implies no unit. `RATE`+`PER` always reads back as
   `PERCENTAGE`; `PERCENTAGE` on anything else reads back as `NUMBER`.
 - **`isPositive`**: `true` if an increase is a good outcome. Get this
   right - it drives significance-direction interpretation downstream (see

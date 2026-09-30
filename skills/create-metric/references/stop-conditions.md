@@ -20,12 +20,15 @@ table and let the user pick - one decision, one turn:
 A search result is not itself a decision - show the user what was found
 instead of picking the most relevant hit yourself.
 
-## Step 3: event not in the resolved list
+## Step 3: event not in the resolved list, or several near-matches
 
 If the event the user wants to measure isn't in the `fme_event_type` list,
 don't invent an ID and don't silently substitute the closest-looking real
-event either - both are guessing on the user's behalf. Present the real
-event list as options:
+event either - both are guessing on the user's behalf. The same applies when
+the list comes back with several plausible matches and none is exact: a
+substring search on a word like `purchase` routinely returns a dozen
+variants, and picking the shortest or cleanest-looking one is still a guess.
+Present the real event list as options:
 
 | Option | Event |
 |--------|-------|
