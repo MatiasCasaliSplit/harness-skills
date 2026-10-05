@@ -75,11 +75,6 @@ for skill_dir in "$SKILLS_DIR"/*/; do
   skill_name="$(basename "$skill_dir")"
   skill_file="$skill_dir/SKILL.md"
 
-  # skill-creator eval-run scratch output, not a skill definition (see .gitignore)
-  if [[ "$skill_name" =~ -workspace$ ]]; then
-    continue
-  fi
-
   if [[ ! -f "$skill_file" ]]; then
     check_fail "$skill_name: SKILL.md not found"
     continue
