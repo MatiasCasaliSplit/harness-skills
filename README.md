@@ -235,6 +235,7 @@ Typical sequence:
 | [`/manage-users`](skills/manage-users/SKILL.md) | Manage users, user groups, and service accounts |
 | [`/manage-roles`](skills/manage-roles/SKILL.md) | Manage role assignments and RBAC |
 | [`/manage-feature-flags`](skills/manage-feature-flags/SKILL.md) | Create, list, toggle, and delete feature flags |
+| [`/cleanup-feature-flags`](skills/cleanup-feature-flags/SKILL.md) | Audit stale FME flags and safely remove a launched flag from code |
 | [`/fme-rollout-pipeline`](skills/fme-rollout-pipeline/SKILL.md) | Compose FeatureFlag stages and FmeFlag* steps for progressive rollout, env promotion, and approval gates |
 
 ### Operations & Debugging (MCP)
