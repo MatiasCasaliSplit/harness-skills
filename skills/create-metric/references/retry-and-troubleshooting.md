@@ -32,7 +32,7 @@ metric. Before drafting a revised payload:
 |--------------|-------------------|
 | Search existing metrics/events, then silently pick one yourself | Turn search results into a concrete option list/table and let the user choose (Step 1, Step 3) |
 | Substitute a different real event for a missing one without asking | Present the real event list and let the user pick (Step 3) |
-| Fill in a plausible owner because "no owner specified" was in the request | Treat a missing owner as a stop condition - ask for a `USER` email or `GROUP` name (Step 5) |
+| Fill in a plausible owner because "no owner specified" was in the request | Treat a missing owner as a stop condition - ask for a `USER` email or `GROUP` identifier (Step 5) |
 | Substitute a plain `filterEventType` when the user asked for a before/trigger ordering | Use `triggerEventType` (HAS_DONE_BEFORE) - it drops the ordering otherwise (Step 6) |
 | Retry `harness_create` after a 409 without a new confirmation | Every revised draft goes back through Step 7, on every attempt (Step 8) |
 | Change `aggregation`/`baseEventTypes` to dodge a 409 and only mention it in a final summary | Name the specific conflicting metric and show the revised draft *before* retrying (Step 8) |

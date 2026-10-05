@@ -69,11 +69,22 @@ reference it later without a mismatch.
 
 ### Step 5: Write the `track()` call
 
-Use the SDK's correct signature for its mode (client vs. server), reusing
-existing context objects (user key, traffic type / attributes) rather than
-constructing new ones. Pass a numeric value only if the metric's
-`aggregation` is `TOTAL`/`AVERAGE` and it doesn't read the value from a
-property (`baseEventTypes[].propertyForValue`); `COUNT`/`RATE` need none.
+Use the signature for the SDK's mode, reusing existing context objects
+(user key, traffic type / attributes) rather than constructing new ones:
+
+- **Server-side SDKs** (Java, Node, Python, Go, Ruby, .NET, PHP):
+  `client.track(key, trafficType, eventType, value?, properties?)`.
+- **Client-side SDKs** (browser JS, iOS, Android, React, React Native): the
+  key is bound when the client is created, so
+  `client.track(trafficType, eventType, value?, properties?)`.
+  `trafficType` can be omitted only if it was also bound at init.
+
+`trafficType` must be the metric's traffic type. Pass a numeric value only
+if the metric's `aggregation` is `TOTAL`/`AVERAGE` and it doesn't read the
+value from a property (`baseEventTypes[].propertyForValue`); `COUNT`/`RATE`
+need none. Pass `properties` whenever the metric uses property filters or
+`propertyForValue` - without them the event still arrives, but property
+filters don't match it and `propertyForValue` has nothing to read.
 If the codebase has an existing tracking wrapper/helper, extend it rather
 than calling the SDK directly.
 

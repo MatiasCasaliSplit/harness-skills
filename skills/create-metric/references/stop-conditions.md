@@ -46,12 +46,12 @@ user understands that tradeoff if they want to proceed anyway.
 
 "No owner specified" in the request is not permission to pick one
 yourself - it means this decision hasn't been made yet. Ask for a `USER`
-email or `GROUP` name before drafting Step 7, the same way a missing event
+email or `GROUP` identifier before drafting Step 7, the same way a missing event
 or aggregation choice would stop you. Filling in a plausible-looking owner
 (your own account, an org admin, the first user in a list) to keep moving
 is guessing on the user's behalf. Prefer a `USER` owner by email when
-unsure - a `GROUP` owner must match a Split Team name, not a Harness
-user-group identifier.
+unsure - a `GROUP` owner's `identifier` must be the group's id, not its
+display name.
 
 The same rule applies if an owner turns out to be invalid rather than
 missing (e.g. a 400 on create) - stop and ask for a real replacement, don't

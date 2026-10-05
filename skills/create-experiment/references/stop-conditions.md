@@ -5,21 +5,22 @@ plausible-sounding guess is available but wrong often enough that the skill
 requires presenting real options (or pointing to the skill that owns the
 decision) and waiting for a pick, instead of improvising.
 
-## Step 2: control vs. variant is unclear, or the flag has too few treatments
+## Step 2: baseline vs. variant is unclear, or the flag has too few treatments
 
 Never invent treatment names ("control", "treatment_a") that don't exist on
 the flag - `baselineTreatment`/`comparisonTreatments` must match real
 `treatments[].name` values from `fme_feature_flag_definition` in the chosen
-environment. If it's unclear which real treatment is control:
+environment. If it's unclear which real treatment is the baseline:
 
 | Option | Treatment | Notes |
 |--------|-----------|-------|
-| `<treatment 1>` | Use as baseline (control) | Matches the definition's current `defaultTreatment`, if set |
+| `<treatment 1>` | Use as baseline | Matches the definition's `baselineTreatment` |
 | `<treatment 2>` | Use as the comparison variant | |
 | `<treatment 3>` | Use as a second comparison variant | Only if the user wants a multi-variant test |
 
-If the definition has only one treatment (or one treatment plus a hardcoded
-"off"), there's nothing to compare against - say so and stop. Adding a
+If the definition has only one treatment, there's nothing to compare
+against - say so and stop. A flag with two treatments such as `on`/`off` is
+a valid experiment. Adding a
 treatment is a flag-definition change, not something this skill performs;
 point to whichever skill/flow owns flag/definition edits and re-run Step 2
 once it exists.
@@ -36,7 +37,7 @@ mechanism yourself:
 |----------------|---------|
 | No metric named | "If this succeeds, what should move - which metric, up or down?" |
 | No causal reasoning | "Why would this change move that metric?" (the "because" clause) |
-| No change/variant named | "What's actually different in the variant vs. control?" |
+| No change/variant named | "What's actually different in the variant vs. the baseline?" |
 
 Don't infer the hypothesis from the flag's name or description - a flag
 named `new-checkout-flow` says nothing about which metric it's expected to

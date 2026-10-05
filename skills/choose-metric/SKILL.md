@@ -14,10 +14,6 @@ compatibility: >-
   Requires Harness MCP v2 server (harness-mcp-v2) with fme_metric,
   fme_event_type, and fme_experiment. Rollout-monitoring recommendations
   are advisory only; the MCP server can't attach metrics to a rollout.
-  fme_experiment is not registered in the MCP server yet, so Step 2's
-  already-attached check is unavailable - recommend from the metric
-  inventory and hypothesis alone until it ships. fme_metric and
-  fme_event_type are available today.
 ---
 
 # Choose Metric
@@ -50,10 +46,8 @@ from the flag name.
 
 ### Step 2: Check what's already attached (experiment context only)
 
-Skip this step while `fme_experiment` is unregistered (see `compatibility`);
-the call will fail on the `resource_type` before reaching the API. Once it
-ships, read the experiment's current attachment before recommending
-anything, so you don't propose duplicates:
+Read the experiment's current attachment before recommending anything, so
+you don't propose duplicates:
 
 ```
 Call MCP tool: harness_get
@@ -78,20 +72,25 @@ Parameters:
   org_id: "<org_id>"
   project_id: "<project_id>"
   filters: { traffic_type_id: "<traffic_type_id>", limit: 30 }
+  compact: false
 ```
 
-Always narrow this call. Resolve `traffic_type_id` from `fme_traffic_type`
-first if you don't have it, and add `name` when the hypothesis gives an
+Always narrow this call. Use the flag's traffic type - a metric on a
+different traffic type won't collect data for the experiment or rollout.
+Resolve `traffic_type_id` from `fme_traffic_type` first if you don't have
+it, and add `name` when the hypothesis gives an
 obvious keyword - an unnarrowed list returns up to 100 full metric
 definitions, which is the largest response in this skill by far.
 
 Filter fields (`traffic_type_id`, `name`, `limit`, `offset`) must go inside
 `filters` - passed top-level they're silently accepted and ignored. FME
 lists default to `limit: 100` (max 100) and ignore `harness_list`'s `page` -
-paginate with `offset` instead. When `totalCount` exceeds the rows you got
+paginate with `offset` instead. When `total` exceeds the rows you got
 back, say the inventory was truncated rather than presenting it as the
-complete set; `totalCount` is an upper bound, so treat it as "at least this
-many more", not an exact remainder.
+complete set; `total` is an upper bound, so treat it as "at least this
+many more", not an exact remainder. Pass `compact: false`: the default
+compact list strips `aggregation`, `spread`, `format`, `isPositive`, and
+`baseEventTypes`.
 
 Read `name`, `description`, `aggregation`, `spread`, `format`,
 `isPositive`, and `baseEventTypes[].eventTypeId` for each. `description` matters here: use it
@@ -130,7 +129,11 @@ guess which. Present = **healthy**.
   event doesn't exist yet) rather than forcing a loose fit.
 - **Secondary metrics**, each typed:
   - *Guardrail* - a safety metric that must not regress (e.g. error rate,
-    latency, unsubscribe rate).
+    latency, unsubscribe rate). This is a role within this experiment, not
+    the workspace-wide `GUARDRAIL` metric category: it goes in
+    `supportingMetrics` and shows as `category: SUPPORTING` in results.
+    Workspace-wide guardrails apply to every experiment automatically and
+    are never attached via `keyMetrics`/`supportingMetrics`.
   - *Counter-metric* - checks for an undesirable tradeoff the primary
     metric wouldn't reveal on its own (e.g. conversion up but average order
     value down).

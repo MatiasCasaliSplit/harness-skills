@@ -39,9 +39,11 @@ Parameters:
   resource_type: "fme_environment"
   org_id: "<org_id>"
   project_id: "<project_id>"
+  compact: false
 ```
 
-Keep the full list with each environment's `isProduction`: Step 4 diffs
+`compact: false` is required: the default compact list strips
+`isProduction`. Keep the full list with each environment's `isProduction`: Step 4 diffs
 against it for missing definitions, and Step 6 labels production
 environments ("is X on" questions almost always mean "in production").
 
@@ -116,13 +118,18 @@ Parameters:
   project_id: "<project_id>"
   filters:
     feature_flag_name: "<flag_name>"
+  compact: false
 ```
 
-For each environment's definition, read `isKilled` (per environment - a
+`compact: false` is required: the default compact list strips every
+targeting field below. For each environment's definition, read `isKilled` (per environment - a
 flag can be killed in one and live in another), `treatments`,
 `defaultTreatment` (served when the flag is killed or the traffic isn't
 allocated), `defaultRule` (buckets served when no targeting rule matches),
-`rules` (each with `buckets` + a `condition`), and `trafficAllocation`.
+`rules` (each with `buckets` + a `condition`), `trafficAllocation`, and
+`impressions.lastImpressionAt` (most recent impression; `null` = never
+received traffic). If `impressions` is absent, report last impression as
+unknown, not as unused.
 
 Diff the returned environments against Step 1's full list explicitly. An
 environment with no definition is "not configured in `<env>`" - a distinct
@@ -158,9 +165,9 @@ noise to summarize away.
 **Rollout status:** <rolloutStatus.name>   **Link:** <openInHarness URL>
 
 ### Per-environment state
-| Environment | Prod? | Killed | Default treatment | Rules | Traffic allocation |
-|---|---|---|---|---|---|
-| <env> | yes/no | yes/no | <defaultTreatment> (<defaultRule split>) | <n> rule(s) - <one-line summary each> | <trafficAllocation>% |
+| Environment | Prod? | Killed | Default treatment | Rules | Traffic allocation | Last impression |
+|---|---|---|---|---|---|---|
+| <env> | yes/no | yes/no | <defaultTreatment> (<defaultRule split>) | <n> rule(s) - <one-line summary each> | <trafficAllocation>% | <lastImpressionAt, "never", or "unknown"> |
 
 ### Notable
 <any cross-environment inconsistency from Step 5, or "consistent across all

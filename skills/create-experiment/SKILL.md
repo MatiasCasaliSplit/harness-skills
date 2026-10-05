@@ -4,7 +4,7 @@ description: >-
   Guide the design and creation of a new FME experiment (fme_experiment):
   inventories existing metrics and event health, hands off gap-filling to
   create-metric/instrument-metric and primary/secondary selection to
-  choose-metric, defines control vs. variant treatments against the flag's
+  choose-metric, defines baseline vs. variant treatments against the flag's
   live definition, drafts a hypothesis, then creates the experiment. Doesn't
   explain an experiment already running or its results - see
   review-experiment-results. Doesn't create the underlying flag or its
@@ -23,16 +23,13 @@ compatibility: >-
   Harness-native only (org_id + project_id) - there is no legacy
   workspace_id support, unlike fme_feature_flag. create requires
   environment_id as a param; the parent (Feature Flag or AI Config) must
-  already exist in that environment. fme_experiment is not registered in
-  the MCP server yet - this skill is written against the contract proposed
-  for it and cannot create an experiment until it ships. The flag, metric,
-  event-type, and environment lookups it depends on work today.
+  already exist in that environment.
 ---
 
 # Create Experiment
 
 Guide a user through designing a well-formed FME experiment end to end -
-metrics, control vs. variant, hypothesis - then create it. This skill
+metrics, baseline vs. variant, hypothesis - then create it. This skill
 orchestrates the decisions; it delegates the decisions other skills already
 own rather than re-deriving them.
 
@@ -74,11 +71,12 @@ An experiment's `parent` is `{type: "FEATURE_FLAG"|"AI_CONFIG", id?, name?}` -
 user says AI Config. If the flag doesn't exist yet, this skill doesn't create
 it - point to `/manage-feature-flags` first, then come back.
 
-### Step 2: Confirm control vs. variant against the flag's live treatments
+### Step 2: Confirm baseline vs. variant against the flag's live treatments
 
 The experiment's `baselineTreatment`/`comparisonTreatments` must be real
 treatment names already configured on the flag in the chosen environment, not
-invented labels like "control"/"treatment":
+invented labels like "control"/"treatment" (`control` is reserved for "the
+SDK couldn't evaluate the flag" and is never a configured treatment):
 
 ```
 Call MCP tool: harness_get
@@ -93,15 +91,50 @@ Read `treatments[].name`. A 404 here means the flag has no definition in that
 environment; if every environment 404s, the flag was created but never
 configured anywhere, so there are no treatments to compare and this skill
 can't proceed - say so and point to `/manage-feature-flags` to configure the
-flag first. If the definition already has a `baselineTreatment`
-set, treat it as the default answer for control, but still confirm - the
-experiment's own `baselineTreatment` is a separate field and can disagree with
-the definition's.
+flag first. Use the definition's `baselineTreatment` as the default answer
+for the baseline, but still confirm - the experiment's own
+`baselineTreatment` is a separate field and can disagree with the
+definition's. Don't use `defaultTreatment` for this: it's what killed traffic
+and traffic outside `trafficAllocation` receive, unrelated to the baseline.
+
+Also read `trafficType.id` (Step 4 filters metrics by it) and check that the
+treatments will actually receive traffic in this environment:
+
+- `isKilled` is `false` - while killed, everyone gets `defaultTreatment`.
+- `trafficAllocation` > 0.
+- The baseline and every comparison treatment have `size` > 0 in the
+  `defaultRule` buckets, or in the `buckets` of the targeting rule the
+  experiment will use. If `rules` is non-empty, ask which one applies - it
+  becomes Step 6's `rule`.
+
+If any check fails, the experiment collects nothing for that treatment until
+the definition changes. Say which check failed and ask whether to continue
+(e.g. the user plans to ramp traffic before `startAt`); fixing it is a
+flag-definition change outside this skill.
+
+Then check for an experiment already running on this flag and environment:
+
+```
+Call MCP tool: harness_list
+Parameters:
+  resource_type: "fme_experiment"
+  org_id: "<org_id>"
+  project_id: "<project_id>"
+  filters:
+    parent_type: "FEATURE_FLAG"
+    parent_name: "<flag_name>"
+    environment_id: "<environment_id>"
+    status: ["ACTIVE"]
+```
+
+If one exists, show it (name, `startAt`/`endAt`, treatments) and ask whether
+the user still wants a second experiment before continuing.
 
 **Stop condition** if there are fewer than two treatments, or it's unclear
-which existing treatment is control vs. which is the variant under test - see
-`references/stop-conditions.md`. This skill does not add treatments to a flag;
-that's a flag-definition change outside this skill's scope.
+which existing treatment is the baseline vs. which is the variant under
+test - see `references/stop-conditions.md`. This skill does not add
+treatments to a flag; that's a flag-definition change outside this skill's
+scope.
 
 ### Step 3: Write the hypothesis
 
@@ -126,12 +159,19 @@ Parameters:
   resource_type: "fme_metric"
   org_id: "<org_id>"
   project_id: "<project_id>"
-  filters: { name: "<keyword from the hypothesis, substring>", limit: 20 }
+  filters:
+    name: "<keyword from the hypothesis, substring>"
+    traffic_type_id: "<trafficType.id from Step 2>"
+    limit: 20
+  compact: false
 ```
 
 Always pass a `name` keyword and a `limit` here - this step is only meant to
 establish whether a gap exists, and an unnarrowed `fme_metric` list returns
-up to 100 full definitions.
+up to 100 full definitions. `traffic_type_id` keeps out metrics on a
+different traffic type than the flag, which won't collect data for this
+experiment. `compact: false` is required: the default compact list strips
+`baseEventTypes`, which the event check below reads.
 
 For each candidate worth considering, check its event is actually flowing
 (same technique `/choose-metric` Step 4 uses - don't re-derive the logic,
@@ -184,11 +224,18 @@ description: <optional>
 hypothesis: <hypothesis text>
 startAt: <ISO-8601>
 endAt: <ISO-8601>
-baselineTreatment: <control treatment name>
+baselineTreatment: <baseline treatment name>
 comparisonTreatments: [<variant treatment name(s)>]
 keyMetrics: [<primary metric id(s) from Step 4's handoff>]
 supportingMetrics: [<secondary metric ids from Step 4's handoff>]
+rule: <optional; targeting rule label, defaults to "default">
+owners: [<optional; {type: "USER", email} or {type: "GROUP", identifier}>]
+tags: [<optional; tag names>]
 ```
+
+Set `rule` when the treatments are served by a targeting rule rather than
+the default rule - results are scoped to that rule, and Step 2's bucket
+check must use that rule's buckets.
 
 `name` must start with a letter, contain only letters/digits/`-`/`_`, and be
 2-250 chars, unique within the project. Do not send `assignmentSource` - the

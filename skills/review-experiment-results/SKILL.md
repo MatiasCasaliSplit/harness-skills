@@ -22,10 +22,6 @@ compatibility: >-
   Requires Harness MCP v2 server (harness-mcp-v2) with fme_experiment,
   fme_experiment_settings, fme_experiment_result, and fme_metric. All are
   Harness-native only (org_id + project_id); no workspace_id support.
-  fme_experiment, fme_experiment_settings, and fme_experiment_result are
-  not registered in the MCP server yet - this skill is written against the
-  contract proposed for them and cannot run until they ship. fme_metric is
-  available today.
 ---
 
 # Review Experiment Results
@@ -53,13 +49,15 @@ Parameters:
     parent_type: "FEATURE_FLAG"
     name: "<experiment name, if given>"
     match_type: "contains"
+    status: ["ACTIVE", "PAUSED", "COMPLETED"]
 ```
 
 - `parent_type` is required: `FEATURE_FLAG` or `AI_CONFIG` (`CONFIG` 404s).
   If the user didn't say what the experiment runs on, use `FEATURE_FLAG`
   and say you assumed it if nothing turns up.
-- `status` defaults to `[ACTIVE]` - pass it explicitly if the experiment
-  might be `PAUSED`/`ARCHIVED`/`COMPLETED`.
+- `status` defaults to `[ACTIVE]` when omitted, which hides finished
+  experiments - and readouts are usually for `COMPLETED` ones. Pass the
+  statuses above unless the user named one; add `ARCHIVED` only if asked.
 - Filters must go inside `filters`; top-level they're silently ignored.
 
 **Stop condition:** if more than one experiment matches, or the user gave
@@ -90,11 +88,13 @@ lists.
 which metric(s) should drive the verdict; don't substitute
 `supportingMetrics`.
 
-**Stop condition:** if `comparisonTreatments` has more than one entry and
-the user didn't specify one, stop before Step 3 and ask which treatment(s)
-to compare - reporting every treatment is a valid answer, but it must be an
-answer, not a default you fall into because Step 4 would return every row
-anyway.
+If `comparisonTreatments` has more than one entry and the user didn't name
+one, report every treatment (one verdict each, see Output Format).
+
+**Stop condition:** if the question presumes a single treatment ("did it
+win?", "should we ship it?") and there's more than one, ask which treatment
+the user means, or confirm a per-treatment readout - one merged answer would
+hide that treatments can differ.
 
 ### Step 3: Fetch experiment settings
 
@@ -133,7 +133,7 @@ Parameters:
   project_id: "<project_id>"
   filters:
     experiment_id: "<experiment_id>"
-    comparisons: "<treatment(s) chosen in Step 2, if narrowing>"
+    comparisons: ["<treatment(s) chosen in Step 2, if narrowing>"]
 ```
 
 List-only (no `get`, no `environment_id` filter - the experiment has one
@@ -158,7 +158,9 @@ Per-row fields:
 - `positive` - the metric's configured `isPositive`, not an observed
   outcome; it's non-null even when every numeric field is `null`.
 
-The response has no SRM field.
+The response has no SRM field, so this skill can't confirm the traffic
+split matched the configured one - Step 8 says so whenever it reports a
+winner.
 
 Report `metricResultState`/`pvalue` as given - never recompute
 significance or claim to correct for peeking.
@@ -224,6 +226,13 @@ Default to plain language:
   "you should ship Treatment B").
 - If `DATA_QUALITY_CONCERN` is set, say so plainly without diagnosing root
   cause.
+- For `WINNER` or `MIXED`, add one line that sample ratio mismatch isn't
+  exposed through the API, and to check the experiment's results page in
+  the Harness UI for it before acting on the result.
+- If `statisticalTestType` is `FIXED_HORIZON` and now is before
+  `startAt + reviewPeriod`, say the readout is preliminary: fixed-horizon
+  p-values are only valid once the review period has elapsed, and stopping
+  early on a significant result inflates false positives.
 - For an `inconclusive` result that isn't significance-tested (see the
   reference file), say why (e.g. an `ACROSS` metric) rather than "no
   significant effect".
@@ -273,9 +282,8 @@ For a single comparison treatment:
 <data-quality caveats, if any; otherwise omit this section>
 ```
 
-For more than one comparison treatment (only after the user has answered
-Step 2's stop condition), keep one shared experiment header and Notes
-section, but repeat the verdict + table block per treatment under its own
+For more than one comparison treatment, keep one shared experiment header
+and Notes section, but repeat the verdict + table block per treatment under its own
 `### <treatment name>` subheading in place of the single `## Verdict` /
 `## Metric Impact` headings - each treatment gets an independent verdict,
 never one merged table or verdict line.

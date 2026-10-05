@@ -102,8 +102,9 @@ don't silently substitute the closest-looking real event either; see
   values), `AVERAGE` (average event value), `RATE` (unique units that did
   the event). `TOTAL`/`AVERAGE` sum the `track()` value, or the property
   named in `baseEventTypes[].propertyForValue`.
-- **`spread`**: send `PER` explicitly. `PER` = computed per unit, then
-  compared across treatments (`RATE`+`PER` = percent of users who
+- **`spread`**: not part of the create body - every new metric is `PER`,
+  so don't put it in the draft. `PER` = computed per unit, then compared
+  across treatments (`RATE`+`PER` = percent of users who
   converted, `COUNT`+`PER` = events per user). `ACROSS` (one aggregate over
   the whole treatment) is a deprecated legacy value with no create path and
   no significance test in experiment results - don't offer it as a choice.
@@ -126,8 +127,10 @@ don't silently substitute the closest-looking real event either; see
 - `owners`: required for now - the backend rejects an empty/missing list
   with 400 `"Owners cannot be empty"` until the planned owners deprecation
   ships. Each entry is `{type: "USER", email: "..."}` or
-  `{type: "GROUP", identifier: "..."}` (a `GROUP` owner must match a Split
-  Team name, not a Harness user-group identifier).
+  `{type: "GROUP", identifier: "..."}`. A `GROUP` `identifier` is matched
+  against the ids of the groups in the project - the `id` an existing
+  `GROUP` owner shows on read, not its display name. An unmatched
+  identifier fails with `group owner not found`.
 
   **Stop condition** if no owner was specified, or one turns out to be
   invalid - see `references/stop-conditions.md`.
@@ -174,7 +177,6 @@ trafficType: <name>
 format: <FORMAT>
 aggregation: <AGGREGATION>
 isPositive: <true|false>
-spread: PER
 baseEventTypes: [{ eventTypeId: <resolved id> }]
 owners: [{ type: "USER", email: <email> }]
 # + filterEventType / triggerEventType / cap / tags if applicable
@@ -226,8 +228,8 @@ experiment's `keyMetrics`/`supportingMetrics`) is a separate step -
 ## Examples
 
 - "Create a metric for checkout conversion rate" - resolve traffic type +
-  event, `aggregation: RATE`, confirm `PER` (percent of users) vs `ACROSS`,
-  draft, confirm, create.
+  event, `aggregation: RATE` (percent of users who converted), draft,
+  confirm, create.
 - "Add a revenue metric based on the purchase_completed event" - Step 3
   resolves `purchase_completed` via `fme_event_type`; `aggregation: TOTAL`,
   `format: DOLLAR`.
