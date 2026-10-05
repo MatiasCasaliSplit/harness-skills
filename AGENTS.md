@@ -65,6 +65,8 @@ Skills live in `skills/<skill-name>/SKILL.md`. Each skill folder may contain `re
 | `/choose-metric` | Recommend primary/guardrail metrics for an experiment or rollout monitoring |
 | `/create-metric` | Create an FME metric definition (traffic type, aggregation, event types, cap, owners) |
 | `/instrument-metric` | Wire up a track() call for a metric's event and verify it arrives |
+| `/cleanup-feature-flags` | Audit stale FME flags and safely remove a launched flag from code |
+| `/fme-rollout-pipeline` | Compose FeatureFlag stages and FmeFlag* steps for flag rollouts |
 
 ### Database Operations
 

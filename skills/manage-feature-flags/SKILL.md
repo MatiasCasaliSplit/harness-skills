@@ -5,11 +5,12 @@ description: >-
   get flag details, create flags, kill or restore flags per environment, archive
   or unarchive flags, and delete flags. Use when asked to create a feature flag,
   kill/restore a flag, list flags, check flag status, enable or disable a feature,
-  or manage feature rollouts. Trigger phrases: feature flag, kill switch, restore
+  or manage feature rollouts. Do NOT use for wiring FME pipeline stages (use
+  fme-rollout-pipeline). Trigger phrases: feature flag, kill switch, restore
   flag, create flag, feature rollout, archive flag, FME flag.
 metadata:
   author: Harness
-  version: 2.0.0
+  version: 2.0.1
   mcp-server: harness-mcp-v2
 license: Apache-2.0
 compatibility: Requires Harness MCP v2 server (harness-mcp-v2). Feature Flags are served by the FME (Split.io) backend — operations use the `fme_feature_flag` resource type. Two scoping modes are supported: Harness-native (`org_id`+`project_id`, preferred) or the deprecated legacy `workspace_id` (Split.io API).
@@ -18,6 +19,9 @@ compatibility: Requires Harness MCP v2 server (harness-mcp-v2). Feature Flags ar
 # Manage Feature Flags
 
 Create, list, kill/restore, and delete Harness FME (Split.io-backed) Feature Flags via MCP.
+
+To audit stale flags or remove a launched flag from application code, use `/cleanup-feature-flags`.
+To wire FeatureFlag / FmeFlag* pipeline stages for a rollout, use `/fme-rollout-pipeline`.
 
 ## Prerequisites
 
@@ -186,6 +190,7 @@ Parameters:
 - "Restore the new-checkout flag in staging" — Execute `restore` with staging `environment_id`
 - "List all feature flags in my workspace" — List `fme_feature_flag` for workspace
 - "Archive the stale beta_banner flag" — Execute `archive`
+- "Build a pipeline to roll the flag out by percentage" — Use `/fme-rollout-pipeline`
 
 ## Performance Notes
 
